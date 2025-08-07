@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-dotenv
+httpx
+langchain
+langchain-community
+langchain-core
+PyMuPDF
+simsimd
+sentence-transformers
+numpy
