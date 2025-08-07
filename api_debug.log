@@ -1,0 +1,157 @@
+2025-08-07 18:31:09,742 - api.main - INFO - Document ID: 6635d94cf9023c83521982b3043ec70c (generated)
+2025-08-07 18:31:13,098 - httpx - INFO - HTTP Request: GET https://hackrx.blob.core.windows.net/assets/policy.pdf?sv=2023-01-03&st=2025-07-04T09%3A11%3A24Z&se=2027-07-05T09%3A11%3A00Z&sr=b&sp=r&sig=N4a9OU0w0QXO6AOIBiu4bpl7AXvEZogeT%2FjUHNO7HzQ%3D "HTTP/1.1 200 OK"
+2025-08-07 18:31:35,835 - rag_pipeline.retriever - INFO - Sample embedded text: National Insurance Co. Ltd. 
+Premises No. 18-0374, Plot no. CBD-81,  
+New Town, Kolkata - 700156 
+Pa...
+2025-08-07 18:31:35,835 - rag_pipeline.retriever - INFO - Sample embedding length: 384
+2025-08-07 18:31:35,999 - rag_pipeline.retriever - INFO - Query: 'What is the grace period for premium payment under the National Parivar Mediclaim Plus Policy?'
+2025-08-07 18:31:35,999 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:36,362 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:36,362 - rag_pipeline.retriever - INFO - Match 1: Score=0.816, Text=all claims made in the aggregate during each policy year. 
+ 
+2.21  Grace Period means the specified ...
+2025-08-07 18:31:36,362 - rag_pipeline.retriever - INFO - Match 2: Score=0.797, Text=National Insurance Co. Ltd. 
+Premises No. 18-0374, Plot no. CBD-81,  
+New Town, Kolkata - 700156 
+Pa...
+2025-08-07 18:31:36,362 - rag_pipeline.retriever - INFO - Match 3: Score=0.788, Text=National Insurance Co. Ltd. 
+Premises No. 18-0374, Plot no. CBD-81,  
+New Town, Kolkata - 700156 
+Pa...
+2025-08-07 18:31:37,373 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:37,431 - rag_pipeline.retriever - INFO - Query: 'What is the waiting period for pre-existing diseases (PED) to be covered?'
+2025-08-07 18:31:37,431 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:37,713 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:37,713 - rag_pipeline.retriever - INFO - Match 1: Score=0.856, Text=Pre Hospitalisation 
+30 days 
+30 days 
+30 days 
+Post Hospitalisation 
+60 days 
+60 days 
+60 days 
+Pre...
+2025-08-07 18:31:37,713 - rag_pipeline.retriever - INFO - Match 2: Score=0.792, Text=stated in the Table of Benefits.   
+ 
+ 
+4 EXCLUSIONS  
+The Company shall not be liable to make any p...
+2025-08-07 18:31:37,713 - rag_pipeline.retriever - INFO - Match 3: Score=0.788, Text=c) If any of the specified disease/procedure falls under the waiting period specified for Pre-Existi...
+2025-08-07 18:31:38,295 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:38,342 - rag_pipeline.retriever - INFO - Query: 'Does this policy cover maternity expenses, and what are the conditions?'
+2025-08-07 18:31:38,342 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:38,721 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:38,723 - rag_pipeline.retriever - INFO - Match 1: Score=0.876, Text=specifically included in the Policy mid-term and requisite premium paid to the Company. 
+ 
+Cover 
+Ma...
+2025-08-07 18:31:38,723 - rag_pipeline.retriever - INFO - Match 2: Score=0.803, Text=the Policy and its Renewals. 
+4. More than one delivery or lawful medical termination of pregnancy d...
+2025-08-07 18:31:38,723 - rag_pipeline.retriever - INFO - Match 3: Score=0.760, Text=unable to attain or sustain a successful pregnancy through reasonable, and medically necessary infer...
+2025-08-07 18:31:40,536 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:40,571 - rag_pipeline.retriever - INFO - Query: 'What is the waiting period for cataract surgery?'
+2025-08-07 18:31:40,571 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:40,862 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:40,862 - rag_pipeline.retriever - INFO - Match 1: Score=0.719, Text=National Insurance Co. Ltd. 
+Premises No. 18-0374, Plot no. CBD-81,  
+New Town, Kolkata - 700156 
+Pa...
+2025-08-07 18:31:40,862 - rag_pipeline.retriever - INFO - Match 2: Score=0.708, Text=m. Surgery of gall bladder and bile duct excluding 
+malignancy 
+n. Surgery 
+of 
+genito-urinary 
+syst...
+2025-08-07 18:31:40,862 - rag_pipeline.retriever - INFO - Match 3: Score=0.700, Text=whichever is lower 
+Up to SI 
+Up to SI 
+ICU – Up to 2% of SI or actual, 
+whichever is lower 
+** Limi...
+2025-08-07 18:31:41,353 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:41,444 - rag_pipeline.retriever - INFO - Query: 'Are the medical expenses for an organ donor covered under this policy?'
+2025-08-07 18:31:41,444 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:41,785 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:41,785 - rag_pipeline.retriever - INFO - Match 1: Score=0.824, Text=transplant. 
+  
+Exclusions 
+The Company shall not be liable to make payment for any claim under this...
+2025-08-07 18:31:41,785 - rag_pipeline.retriever - INFO - Match 2: Score=0.735, Text=specifically included in the Policy mid-term and requisite premium paid to the Company. 
+ 
+Cover 
+Ma...
+2025-08-07 18:31:41,785 - rag_pipeline.retriever - INFO - Match 3: Score=0.732, Text=1. Insured and insured persons above forty five years of age. 
+2. Diagnostic tests related to infert...
+2025-08-07 18:31:42,587 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:42,655 - rag_pipeline.retriever - INFO - Query: 'What is the No Claim Discount (NCD) offered in this policy?'
+2025-08-07 18:31:42,655 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:43,017 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:43,018 - rag_pipeline.retriever - INFO - Match 1: Score=0.826, Text=schedule. 
+ 
+3.2 GOOD HEALTH INCENTIVES  
+3.2.1 No Claim Discount (NCD) 
+On renewal of policies with...
+2025-08-07 18:31:43,018 - rag_pipeline.retriever - INFO - Match 2: Score=0.729, Text=No Claim Discount (Section 3.1). 
+ii. 
+Any amount payable shall not be subject to co-payment. 
+Notif...
+2025-08-07 18:31:43,018 - rag_pipeline.retriever - INFO - Match 3: Score=0.704, Text=National Insurance Co. Ltd. 
+Premises No. 18-0374, Plot no. CBD-81,  
+New Town, Kolkata - 700156 
+Pa...
+2025-08-07 18:31:43,757 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:43,814 - rag_pipeline.retriever - INFO - Query: 'Is there a benefit for preventive health check-ups?'
+2025-08-07 18:31:43,814 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:44,147 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:44,147 - rag_pipeline.retriever - INFO - Match 1: Score=0.733, Text=Other benefits 
+ 
+ 
+ 
+Reinstatement of sum insured due to road traffic accident 
+Yes 
+Yes 
+Yes 
+Good...
+2025-08-07 18:31:44,147 - rag_pipeline.retriever - INFO - Match 2: Score=0.677, Text=i. 
+All bills, prescriptions from medical practitioner 
+ii. Diagnostic test bills, copy of reports 
+...
+2025-08-07 18:31:44,147 - rag_pipeline.retriever - INFO - Match 3: Score=0.662, Text=under this Policy offered by the Company, 
+i. The proposed Insured Person will get all the accrued c...
+2025-08-07 18:31:44,844 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:44,944 - rag_pipeline.retriever - INFO - Query: 'How does the policy define a 'Hospital'?'
+2025-08-07 18:31:44,944 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:45,268 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:45,270 - rag_pipeline.retriever - INFO - Match 1: Score=0.797, Text=Coverage shall not be available during the period for which no premium is received. 
+ 
+2.22 Hospital...
+2025-08-07 18:31:45,270 - rag_pipeline.retriever - INFO - Match 2: Score=0.762, Text=Illness) or sustain any bodily injury due to an Accident (hereinafter called Injury) requiring Hospi...
+2025-08-07 18:31:45,270 - rag_pipeline.retriever - INFO - Match 3: Score=0.757, Text=specific provider and consistent with the prevailing charges in the geographical area for identical ...
+2025-08-07 18:31:45,973 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:46,023 - rag_pipeline.retriever - INFO - Query: 'What is the extent of coverage for AYUSH treatments?'
+2025-08-07 18:31:46,025 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:46,396 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:46,396 - rag_pipeline.retriever - INFO - Match 1: Score=0.788, Text=all the following criterion: 
+i. Having qualified registered AYUSH Medical Practitioner in charge ro...
+2025-08-07 18:31:46,396 - rag_pipeline.retriever - INFO - Match 2: Score=0.773, Text=i. 
+Treatment other than Allopathy/ Modern medicine, AYUSH 
+ii. * Cosmetic dental treatment to strai...
+2025-08-07 18:31:46,396 - rag_pipeline.retriever - INFO - Match 3: Score=0.768, Text=but not in the Outpatient department of a Hospital. 
+3.1.6 AYUSH Treatment 
+The Company shall indemn...
+2025-08-07 18:31:47,167 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-07 18:31:47,253 - rag_pipeline.retriever - INFO - Query: 'Are there any sub-limits on room rent and ICU charges for Plan A?'
+2025-08-07 18:31:47,255 - rag_pipeline.retriever - INFO - Query embedding length: 384
+2025-08-07 18:31:47,537 - rag_pipeline.retriever - INFO - Found 6 matches
+2025-08-07 18:31:47,537 - rag_pipeline.retriever - INFO - Match 1: Score=0.775, Text=xi. Circumcision, necessitated for treatment of a disease or injury 
+ 
+3.1.1.1 Limit for Room Charge...
+2025-08-07 18:31:47,537 - rag_pipeline.retriever - INFO - Match 2: Score=0.716, Text=specific provider and consistent with the prevailing charges in the geographical area for identical ...
+2025-08-07 18:31:47,537 - rag_pipeline.retriever - INFO - Match 3: Score=0.706, Text=whichever is lower 
+Up to SI 
+Up to SI 
+ICU – Up to 2% of SI or actual, 
+whichever is lower 
+** Limi...
+2025-08-07 18:31:48,222 - httpx - INFO - HTTP Request: POST https://api.mistral.ai/v1/chat/completions "HTTP/1.1 200 OK"
