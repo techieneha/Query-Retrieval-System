@@ -1,45 +1,55 @@
-from langchain_community.chat_models import ChatOllama
-from langchain_core.output_parsers import StrOutputParser
+from mistralai.client import MistralClient
+from mistralai.models.chat_completion import ChatMessage
+import os
 import logging
-from functools import lru_cache
-from typing import List, Any
+from typing import List
 
 logger = logging.getLogger(__name__)
 
-LLM = ChatOllama(
-    model="mistral",
-    temperature=0.1,
-    num_ctx=1024,
-    num_thread=4,
-    repeat_penalty=1.0
-)
+# Initialize client
+client = MistralClient(api_key=os.getenv("MISTRAL_API_KEY"))
+MODEL_NAME = "mistral-tiny"  # Fastest model for quick responses
 
-@lru_cache(maxsize=100)
-def _build_concise_prompt(query: str, clauses: tuple) -> str:
-    """Cacheable prompt builder"""
-    clauses_str = chr(10).join(clauses)
-    return f"""<s>[INST] You are an insurance policy expert. Answer in 1-2 sentences:
-    
-{clauses_str}
-
-Question: {query}
-
-Rules:
-1. Be concise (1-2 sentences)
-2. Start with Yes/No if applicable
-3. Include only key details
-4. Never say "refer to document"
-
-Answer: [/INST]"""
-
-async def answer_with_llm(query: str, top_docs: List[Any]) -> str:
-    """Optimized LLM answering"""
+async def answer_with_llm(query: str, context_clauses: List[str]) -> str:
+    """Generate precise answers using Mistral API"""
     try:
-        clauses = tuple(doc.page_content for doc in top_docs)
-        prompt = _build_concise_prompt(query, clauses)
-        chain = LLM | StrOutputParser()
-        response = await chain.ainvoke(prompt)
-        return response.strip() + ('' if response.endswith('.') else '.')
+        if not context_clauses:
+            return "No relevant policy clauses found."
+        
+        # Build the prompt
+        messages = [
+            ChatMessage(role="system", content=SYSTEM_PROMPT),
+            ChatMessage(role="user", content=USER_PROMPT.format(
+                context="\n".join(context_clauses[:3]),  # Top 3 most relevant
+                question=query
+            ))
+        ]
+        
+        # Get response
+        response = client.chat(
+            model=MODEL_NAME,
+            messages=messages,
+            temperature=0.1,  # Low for deterministic answers
+            max_tokens=200    # Limit response length
+        )
+        
+        # Clean and return
+        answer = response.choices[0].message.content
+        return answer.strip() + ('' if answer.endswith('.') else '.')
     except Exception as e:
-        logger.error(f"LLM error: {str(e)}")
-        return "Answer unavailable."
+        logger.error(f"Mistral API error: {str(e)}")
+        return "Answer unavailable"
+
+SYSTEM_PROMPT = """You are an insurance policy expert. Provide concise answers:
+1. Extract exact numbers/dates/amounts
+2. 1-2 sentences maximum
+3. Never say "refer to document"
+4. If unsure: "Not specified in policy\""""
+
+USER_PROMPT = """**Relevant Policy Clauses:**
+{context}
+
+**Question:**
+{question}
+
+**Answer:**"""
