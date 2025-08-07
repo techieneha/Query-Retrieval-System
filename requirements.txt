@@ -14,5 +14,5 @@ pydantic
 pinecone 
 pandas
 numpy
-httpx=0.25.2
+httpx
 huggingface-hub
