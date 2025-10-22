@@ -43,7 +43,7 @@ body {
   flex-direction: column;
 }
 
-/* Header */
+
 .insurance-header {
   background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
   padding: 1.5rem 2rem;
@@ -126,10 +126,9 @@ body {
   50% { opacity: 0.5; }
 }
 
-/* Main Layout */
+
 .insurance-layout {
   max-width: 1400px;
-  margin: 0 auto;
   padding: 2rem;
   flex: 1;
   display: grid;
@@ -138,7 +137,7 @@ body {
   align-items: start;
 }
 
-/* Document Sidebar */
+
 .document-sidebar {
   background: var(--card-bg);
   backdrop-filter: blur(20px);
@@ -164,7 +163,7 @@ body {
   color: var(--primary-light);
 }
 
-/* Upload Card */
+
 .upload-card {
   background: var(--glass-bg);
   border: 2px dashed var(--glass-border);
@@ -203,7 +202,7 @@ body {
   margin: 0;
 }
 
-/* Document List */
+
 .document-list {
   margin-top: 2rem;
 }
@@ -264,7 +263,7 @@ body {
   color: var(--text-muted);
 }
 
-/* Quick Questions */
+
 .quick-questions {
   margin-top: 2rem;
 }
@@ -309,7 +308,7 @@ body {
   opacity: 0.7;
 }
 
-/* Chat Interface */
+
 .chat-interface {
   background: var(--card-bg);
   backdrop-filter: blur(20px);
@@ -514,7 +513,7 @@ body {
   font-size: 1rem;
 }
 
-/* Welcome Message */
+
 .welcome-message {
   display: flex;
   justify-content: center;
@@ -522,7 +521,7 @@ body {
   height: 100%;
 }
 
-/* Responsive Design */
+
 @media (max-width: 1024px) {
   .insurance-layout {
     grid-template-columns: 1fr;
@@ -558,7 +557,7 @@ body {
   }
 }
 
-/* Custom Scrollbar */
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -575,4 +574,18 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+.clear-chat-button {
+  background: var(--error-red);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1.5rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 1rem 0.5rem 0.5rem auto; 
+  display: block;
+  align-self: flex-end; 
 }

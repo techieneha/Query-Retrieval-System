@@ -15,7 +15,6 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
 
-  // Check backend connection
   const checkBackend = useCallback(async () => {
     try {
       await api.healthCheck();
@@ -32,7 +31,7 @@ function App() {
     return () => clearInterval(interval);
   }, [checkBackend]);
 
-  // Save state to localStorage
+  
   const saveState = useCallback(() => {
     if (fileId) localStorage.setItem('policyai_fileId', fileId);
     if (uploadedFile) localStorage.setItem('policyai_fileInfo', JSON.stringify(uploadedFile));
@@ -110,6 +109,11 @@ function App() {
 
   const clearChat = () => {
     setMessages([]);
+    setUploadedFile(null);
+    setFileId(null);
+    localStorage.removeItem('policyai_fileId');
+    localStorage.removeItem('policyai_fileInfo');
+    localStorage.removeItem('policyai_messages');
   };
 
   const sampleQuestions = [
@@ -123,7 +127,7 @@ function App() {
 
   return (
     <div className="insurance-app">
-      {/* Header */}
+      
       <header className="insurance-header">
         <div className="header-content">
           <div className="brand">
@@ -145,11 +149,11 @@ function App() {
         </div>
       </header>
 
-      {/* Main Layout */}
+      
       <main className="insurance-layout">
-        {/* Document Sidebar */}
+        
         <aside className="document-sidebar">
-          {/* Upload Card */}
+          
           <div className="upload-card" onClick={() => document.getElementById('fileInput')?.click()}>
             <div className="upload-icon">
               <i className="fas fa-cloud-upload-alt"></i>
@@ -174,7 +178,7 @@ function App() {
             />
           </div>
 
-          {/* Current Document */}
+          
           {uploadedFile && (
             <div className="document-list">
               <div className="section-title">
@@ -196,7 +200,7 @@ function App() {
             </div>
           )}
 
-          {/* Quick Questions */}
+          
           <div className="quick-questions">
             <div className="section-title">
               <i className="fas fa-bolt"></i>
@@ -218,7 +222,7 @@ function App() {
           </div>
         </aside>
 
-        {/* Chat Interface */}
+        
         <section className="chat-interface">
           <div className="chat-header">
             <h2>Policy Analysis</h2>
@@ -272,6 +276,9 @@ function App() {
             )}
           </div>
 
+        <button className="clear-chat-button" onClick={clearChat} disabled={messages.length === 0}>
+          Start Again
+        </button>
           <div className="chat-input-area">
             <div className="input-group">
               <textarea
