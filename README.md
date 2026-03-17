@@ -13,12 +13,12 @@ Insurance policies are 50+ pages of complex legal text. Finding specific informa
 RAG-powered system that answers policy questions instantly with confidence scores and exact page references.
 
 **Key Features:**
-- 🎯 **94% accuracy** on policy-specific queries
-- ⚡ **Sub-2s response time** (0.1s with caching)
-- 📚 **Source citations** with page numbers
-- 🧠 **Confidence scoring** (transparent AI decisions)
-- 💾 **Redis caching** (70% cost reduction)
-- 📊 **Real-time analytics** dashboard
+-  **94% accuracy** on policy-specific queries
+-  **Sub-2s response time** (0.1s with caching)
+-  **Source citations** with page numbers
+-  **Confidence scoring** (transparent AI decisions)
+-  **Redis caching** (70% cost reduction)
+-  **Real-time analytics** dashboard
 
 ---
 
@@ -72,14 +72,14 @@ Open `index.html` in your browser → Upload PDF → Ask questions!
 
 
 ### Main Interface
-![PolicyAI Demo](docs/images/demo.png)
+![PolicyAI Demo](images/demo.png)
 
 ### Analytics Dashboard
-![Analytics](docs/images/dashboard.png)
+![Analytics](images/dashboard.png)
 
 ---
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Upload Document
 ```bash
@@ -124,7 +124,7 @@ GET /admin/dashboard
 
 ---
 
-## 🔑 Environment Variables
+##  Environment Variables
 
 ```env
 PINECONE_API_KEY=your_key_here
@@ -139,7 +139,7 @@ Get free API keys:
 
 ---
 
-## 🧪 Example Queries
+## Example Queries
 
 ```
 "What is my deductible amount?"
@@ -158,35 +158,3 @@ Get free API keys:
 4. **Confidence Algorithm:** `min(1.0, top_score * (1 + variance * 0.5))`
 
 ---
-
-## 📈 Roadmap
-
-- [ ] Hybrid search (dense + BM25)
-- [ ] Streaming responses
-- [ ] Multi-language support
-- [ ] Fine-tuned embeddings
-- [ ] Batch document processing
-
----
-
-## 👤 Author
-
-**Neha Dnyandev**
-- GitHub: [@techieneha](https://github.com/techieneha)
-- LinkedIn: [Connect with me](https://linkedin.com/in/yourprofile)
-
----
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file
-
----
-
-## 🙏 Acknowledgments
-
-Built with [Pinecone](https://pinecone.io), [Mistral AI](https://mistral.ai), and [FastAPI](https://fastapi.tiangolo.com)
-
----
-
-**⭐ Star this repo if you find it helpful!**
