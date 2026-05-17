@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PolicyAI — Claim Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --surface: #13161b;
+    --surface2: #1a1e25;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #7ee8a2;
+    --accent2: #38bdf8;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --approved: #7ee8a2;
+    --pending: #fbbf24;
+    --rejected: #f87171;
+    --info: #38bdf8;
+    --needs: #c084fc;
+    --processing: #38bdf8;
+    --font-head: 'Fraunces', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── LAYOUT ── */
+  .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .sidebar-logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo h1 {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .sidebar-logo h1 span { color: var(--accent); }
+  .sidebar-logo p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+    letter-spacing: .04em;
+  }
+  .nav { padding: 20px 0; flex: 1; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 24px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(126,232,162,.05); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .7; }
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-status {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+  }
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .dot.online { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 2s infinite; }
+  .dot.offline { background: var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  /* ── MAIN ── */
+  .main { overflow-y: auto; }
+  .page { display: none; padding: 36px 40px; }
+  .page.active { display: block; }
+
+  .page-header {
+    margin-bottom: 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .page-header h2 {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: -0.4px;
+    color: var(--text);
+  }
+  .page-header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* ── METRIC CARDS ── */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-color, var(--accent));
+    opacity: .6;
+  }
+  .metric-label { font-size: 11px; font-family: var(--font-mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .metric-value { font-size: 32px; font-weight: 600; font-family: var(--font-head); margin-top: 8px; line-height: 1; }
+  .metric-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ── SUBMIT FORM ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+  .card h3 {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; font-family: var(--font-mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  input, select, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 300;
+    padding: 10px 14px;
+    transition: border-color .15s;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: var(--surface2); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #0a1a10; }
+  .btn-primary:hover { background: #5dd68a; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+
+  /* ── STATUS BADGE ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: .04em;
+  }
+  .badge-auto_approved, .badge-approved { background: rgba(126,232,162,.12); color: var(--approved); border: 1px solid rgba(126,232,162,.2); }
+  .badge-pending_review { background: rgba(251,191,36,.1); color: var(--pending); border: 1px solid rgba(251,191,36,.2); }
+  .badge-rejected { background: rgba(248,113,113,.1); color: var(--rejected); border: 1px solid rgba(248,113,113,.2); }
+  .badge-needs_info { background: rgba(192,132,252,.1); color: var(--needs); border: 1px solid rgba(192,132,252,.2); }
+  .badge-processing, .badge-submitted { background: rgba(56,189,248,.1); color: var(--info); border: 1px solid rgba(56,189,248,.2); }
+  .badge-draft { background: rgba(107,114,128,.15); color: var(--muted); border: 1px solid rgba(107,114,128,.2); }
+
+  /* ── CLAIMS TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr { transition: background .1s; }
+  tr:hover td { background: rgba(255,255,255,.02); cursor: pointer; }
+  .mono { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .amount { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+
+  /* ── CLAIM DETAIL PANEL ── */
+  .detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-panel {
+    background: var(--surface);
+    width: 520px;
+    height: 100vh;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+    padding: 32px;
+    animation: slideIn .2s ease;
+  }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .detail-close {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    float: right;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .detail-close:hover { color: var(--text); }
+  .detail-id { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .detail-title { font-family: var(--font-head); font-size: 22px; font-weight: 300; margin-bottom: 20px; }
+
+  .section-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kv-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; gap: 16px; }
+  .kv-key { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .kv-val { font-size: 13px; text-align: right; word-break: break-all; }
+
+  .confidence-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .confidence-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+
+  .citation-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    line-height: 1.6;
+  }
+
+  .log-line {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-line:last-child { border-bottom: none; }
+  .log-line span { color: var(--accent2); }
+
+  .flags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .flag-chip {
+    background: rgba(248,113,113,.1);
+    border: 1px solid rgba(248,113,113,.2);
+    color: var(--rejected);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastIn .2s ease;
+    min-width: 280px;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .toast.success { border-left: 3px solid var(--accent); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  .toast.info { border-left: 3px solid var(--info); }
+
+  /* ── ADJUSTER REVIEW ── */
+  .decision-card {
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-top: 16px;
+    border: 1px solid;
+  }
+  .decision-auto_approve, .decision-approved { background: rgba(126,232,162,.05); border-color: rgba(126,232,162,.2); }
+  .decision-escalate_review, .decision-pending_review { background: rgba(251,191,36,.05); border-color: rgba(251,191,36,.2); }
+  .decision-reject, .decision-rejected { background: rgba(248,113,113,.05); border-color: rgba(248,113,113,.2); }
+  .decision-request_info, .decision-needs_info { background: rgba(192,132,252,.05); border-color: rgba(192,132,252,.2); }
+
+  .decision-action { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .decision-reason { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .decision-payout { font-family: var(--font-head); font-size: 28px; font-weight: 300; margin-top: 10px; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty svg { width: 40px; height: 40px; opacity: .3; margin-bottom: 12px; }
+  .empty p { font-size: 13px; }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(126,232,162,.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── POLL INDICATOR ── */
+  .poll-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(56,189,248,.08);
+    border: 1px solid rgba(56,189,248,.2);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--info);
+    margin-bottom: 20px;
+  }
+  .poll-banner.active { display: flex; }
+
+  /* ── RISK METER ── */
+  .risk-meter { display: flex; gap: 3px; margin-top: 6px; }
+  .risk-seg { height: 6px; flex: 1; border-radius: 3px; background: var(--border2); }
+  .risk-seg.fill-low { background: var(--accent); }
+  .risk-seg.fill-med { background: var(--warn); }
+  .risk-seg.fill-high { background: var(--danger); }
+
+  /* ── PIPELINE TRACE ── */
+  .pipeline-steps { display: flex; align-items: center; gap: 0; margin: 16px 0; overflow-x: auto; padding-bottom: 4px; }
+  .pipe-step { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .pipe-node {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+  .pipe-node.done { background: rgba(126,232,162,.1); border-color: var(--accent); color: var(--accent); }
+  .pipe-node.active { background: rgba(56,189,248,.1); border-color: var(--info); color: var(--info); animation: pulse 1s infinite; }
+  .pipe-label { font-size: 10px; color: var(--muted); font-family: var(--font-mono); text-align: center; max-width: 52px; }
+  .pipe-connector { width: 28px; height: 2px; background: var(--border2); flex-shrink: 0; margin-bottom: 14px; }
+  .pipe-connector.done { background: var(--accent); opacity: .4; }
+
+  /* ── CONFIG BAR ── */
+  .config-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .config-bar label { font-size: 11px; font-family: var(--font-mono); color: var(--muted); white-space: nowrap; }
+  .config-bar input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    padding: 7px 12px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Policy<span>AI</span></h1>
+      <p>claim processing v2.0</p>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showPage('submit', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+        Submit Claim
+      </div>
+      <div class="nav-item" onclick="showPage('queue', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Adjuster Queue
+      </div>
+      <div class="nav-item" onclick="showPage('all', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        All Claims
+      </div>
+      <div class="nav-item" onclick="showPage('lookup', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        Status Lookup
+      </div>
+    </nav>
+    <div class="sidebar-status">
+      <div class="status-dot">
+        <div class="dot" id="server-dot"></div>
+        <span id="server-status">checking...</span>
+      </div>
+      <div style="margin-top:6px; font-size:11px; color:var(--muted); font-family:var(--font-mono);" id="server-url-label">http://127.0.0.1:8000</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- SUBMIT PAGE -->
+    <div class="page active" id="page-submit">
+      <div class="page-header">
+        <div>
+          <h2>Submit a Claim</h2>
+          <p>Agent pipeline runs automatically after submission</p>
+        </div>
+      </div>
+
+      <div id="poll-banner" class="poll-banner">
+        <div class="spinner"></div>
+        <span id="poll-text">Processing claim...</span>
+        <span id="poll-claim-id" style="color:var(--muted); margin-left:auto;"></span>
+      </div>
+
+      <div class="card">
+        <h3>Claim Details</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Policy File ID</label>
+            <input id="f-file-id" type="text" placeholder="from PolicyAI upload endpoint" />
+          </div>
+          <div class="form-group">
+            <label>Policy Number</label>
+            <input id="f-policy-number" type="text" placeholder="e.g. POL-2024-001" />
+          </div>
+          <div class="form-group">
+            <label>Claimant Name</label>
+            <input id="f-claimant" type="text" placeholder="Full legal name" />
+          </div>
+          <div class="form-group">
+            <label>Date of Loss</label>
+            <input id="f-date" type="date" />
+          </div>
+          <div class="form-group">
+            <label>Claimed Amount (₹)</label>
+            <input id="f-amount" type="number" placeholder="e.g. 45000" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Ollama Model</label>
+            <select id="f-model">
+              <option value="mistral">mistral</option>
+              <option value="llama3">llama3</option>
+              <option value="phi3">phi3</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Incident Description</label>
+            <textarea id="f-description" placeholder="Describe the incident in detail — type, circumstances, damages, injuries..."></textarea>
+          </div>
+        </div>
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn btn-primary" id="submit-btn" onclick="submitClaim()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            Submit Claim
+          </button>
+          <button class="btn btn-secondary" onclick="fillDemo()">Fill Demo Data</button>
+        </div>
+      </div>
+
+      <!-- Result Card -->
+      <div id="result-card" style="display:none">
+        <div class="card" id="result-inner"></div>
+      </div>
+    </div>
+
+    <!-- ADJUSTER QUEUE PAGE -->
+    <div class="page" id="page-queue">
+      <div class="page-header">
+        <div>
+          <h2>Adjuster Queue</h2>
+          <p>Claims requiring human review</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadQueue()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Claim ID</th>
+              <th>Claimant</th>
+              <th>Amount</th>
+              <th>Fraud Risk</th>
+              <th>AI Confidence</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr></thead>
+            <tbody id="queue-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL CLAIMS PAGE -->
+    <div class="page" id="page-all">
+      <div class="page-header">
+        <div>
+          <h2>All Claims</h2>
+          <p>Complete claims history this session</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadAllClaims()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <div class="metrics" id="metrics-row">
+        <div class="metric-card" style="--accent-color:var(--info)">
+          <div class="metric-label">Total</div>
+          <div class="metric-value" id="m-total">—</div>
+          <div class="metric-sub">claims submitted</div>
+        </div>
+        <div class="metric-card" style="--accent-color:var(--accent)">
+          <div class="metric-label">Auto-Approved</div>
+          <div class="metric-value" id="m-approved">—</div>
+          <div class="metric-sub">no human needed</div>
+        </div>
+        <div class="metric-card" style="--accent-color:var(--warn)">
+          <div class="metric-label">Pending Review</div>
+          <div class="metric-value" id="m-pending">—</div>
+          <div class="metric-sub">adjuster queue</div>
+        </div>
+        <div class="metric-card" style="--accent-color:var(--danger)">
+          <div class="metric-label">Rejected</div>
+          <div class="metric-value" id="m-rejected">—</div>
+          <div class="metric-sub">not covered</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Claim ID</th>
+              <th>Claimant</th>
+              <th>Incident</th>
+              <th>Amount</th>
+              <th>Decision</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr></thead>
+            <tbody id="all-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS LOOKUP PAGE -->
+    <div class="page" id="page-lookup">
+      <div class="page-header">
+        <div>
+          <h2>Status Lookup</h2>
+          <p>Check any claim by ID</p>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex; gap:12px; align-items:flex-end;">
+          <div class="form-group" style="flex:1">
+            <label>Claim ID</label>
+            <input id="lookup-id" type="text" placeholder="e.g. 79eca5e4-8acc-4686-9aa2-..." />
+          </div>
+          <button class="btn btn-primary" onclick="lookupClaim()">Look Up</button>
+        </div>
+      </div>
+      <div id="lookup-result"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detail-panel"></div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- CONFIG MODAL (top-right server URL config) -->
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+let API_BASE = 'http://127.0.0.1:8000';
+let pollInterval = null;
+let allClaimsCache = [];
+
+// ── SERVER HEALTH ─────────────────────────────────────────────────────────────
+async function checkServer() {
+  try {
+    const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
+    const d = await r.json();
+    document.getElementById('server-dot').className = 'dot online';
+    document.getElementById('server-status').textContent = `online · v${d.version || '2.0'}`;
+  } catch {
+    document.getElementById('server-dot').className = 'dot offline';
+    document.getElementById('server-status').textContent = 'offline';
+  }
+}
+
+checkServer();
+setInterval(checkServer, 8000);
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'queue') loadQueue();
+  if (name === 'all') loadAllClaims();
+}
+
+// ── DEMO DATA ─────────────────────────────────────────────────────────────────
+function fillDemo() {
+  document.getElementById('f-file-id').value = 'demo-policy-file-001';
+  document.getElementById('f-policy-number').value = 'POL-2024-' + Math.floor(Math.random() * 900 + 100);
+  document.getElementById('f-claimant').value = 'Neha Sharma';
+  document.getElementById('f-date').value = '2024-03-15';
+  document.getElementById('f-amount').value = Math.floor(Math.random() * 80000 + 10000);
+  document.getElementById('f-description').value = 'Vehicle involved in rear-end collision on Pune-Mumbai expressway. Significant damage to rear bumper, boot, and left tail light assembly. Medical expenses for whiplash treatment at Sahyadri Hospital.';
+}
+
+// ── SUBMIT CLAIM ──────────────────────────────────────────────────────────────
+async function submitClaim() {
+  const btn = document.getElementById('submit-btn');
+  const fileId = document.getElementById('f-file-id').value.trim();
+  const claimant = document.getElementById('f-claimant').value.trim();
+  const policy = document.getElementById('f-policy-number').value.trim();
+  const desc = document.getElementById('f-description').value.trim();
+  const amount = document.getElementById('f-amount').value;
+  const date = document.getElementById('f-date').value;
+  const model = document.getElementById('f-model').value;
+
+  if (!fileId || !claimant || !policy || !desc || !amount || !date) {
+    toast('Please fill all required fields', 'error'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+  const fd = new FormData();
+  fd.append('file_id', fileId);
+  fd.append('claimant_name', claimant);
+  fd.append('policy_number', policy);
+  fd.append('incident_description', desc);
+  fd.append('claimed_amount', amount);
+  fd.append('date_of_loss', date);
+  fd.append('model_name', model);
+
+  try {
+    const r = await fetch(`${API_BASE}/api/v1/claims/submit`, { method: 'POST', body: fd });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    toast(`Claim submitted — ${d.claim_id.slice(0, 8)}...`, 'success');
+    showSubmitResult(d);
+    startPolling(d.claim_id);
+    allClaimsCache.push(d.claim_id);
+  } catch (e) {
+    toast('Submit failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Submit Claim`;
+  }
+}
+
+function showSubmitResult(d) {
+  document.getElementById('result-card').style.display = 'block';
+  document.getElementById('result-inner').innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h3 style="margin:0">Claim Submitted</h3>
+      <span class="badge badge-submitted">submitted</span>
+    </div>
+    <div class="kv-row"><span class="kv-key">Claim ID</span><span class="kv-val mono">${d.claim_id}</span></div>
+    <div class="kv-row"><span class="kv-key">Status</span><span class="kv-val">${d.status}</span></div>
+    <div class="kv-row"><span class="kv-key">Message</span><span class="kv-val">${d.message}</span></div>
+    <div style="margin-top:16px;" id="inline-status-area">
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--info); font-family:var(--font-mono);">
+        <div class="spinner"></div> Agent pipeline running in background...
+      </div>
+    </div>
+  `;
+}
+
+// ── POLLING ───────────────────────────────────────────────────────────────────
+function startPolling(claimId) {
+  const banner = document.getElementById('poll-banner');
+  const pollText = document.getElementById('poll-text');
+  const pollIdEl = document.getElementById('poll-claim-id');
+
+  banner.classList.add('active');
+  pollText.textContent = 'Processing claim...';
+  pollIdEl.textContent = claimId.slice(0, 12) + '...';
+
+  if (pollInterval) clearInterval(pollInterval);
+  let attempts = 0;
+
+  pollInterval = setInterval(async () => {
+    attempts++;
+    try {
+      const r = await fetch(`${API_BASE}/api/v1/claims/${claimId}/status`);
+      const d = await r.json();
+      const terminal = ['auto_approved', 'approved', 'rejected', 'pending_review', 'needs_info'];
+
+      if (terminal.includes(d.status)) {
+        clearInterval(pollInterval);
+        banner.classList.remove('active');
+        updateInlineStatus(d);
+        toast(`Claim ${d.status.replace('_', ' ')} — ${claimId.slice(0, 8)}...`,
+              d.status === 'auto_approved' || d.status === 'approved' ? 'success' :
+              d.status === 'rejected' ? 'error' : 'info');
+      } else {
+        pollText.textContent = `Processing... (${d.status})`;
+      }
+    } catch {/* ignore */}
+
+    if (attempts > 60) { clearInterval(pollInterval); banner.classList.remove('active'); }
+  }, 2500);
+}
+
+function updateInlineStatus(d) {
+  const el = document.getElementById('inline-status-area');
+  if (!el) return;
+  const dec = d.decision || {};
+  const cov = d.coverage || {};
+  const fraud = d.fraud_risk || {};
+
+  el.innerHTML = `
+    <div class="section-label" style="margin-top:0">Pipeline Result</div>
+    ${renderPipelineSteps(d.status)}
+    <div class="decision-card decision-${dec.action || d.status}">
+      <div class="decision-action">${formatAction(dec.action || d.status)}</div>
+      <div class="decision-reason">${dec.reason || '—'}</div>
+      ${dec.recommended_payout ? `<div class="decision-payout">₹${Number(dec.recommended_payout).toLocaleString('en-IN')}</div>` : ''}
+    </div>
+    ${cov.is_covered !== undefined ? `
+    <div class="section-label">Coverage</div>
+    <div class="kv-row"><span class="kv-key">Covered</span><span class="kv-val" style="color:${cov.is_covered ? 'var(--accent)' : 'var(--danger)'}">${cov.is_covered ? 'Yes' : 'No'}</span></div>
+    <div class="kv-row"><span class="kv-key">Confidence</span><span class="kv-val">${((cov.confidence||0)*100).toFixed(0)}%</span></div>
+    <div class="confidence-bar"><div class="confidence-fill" style="width:${((cov.confidence||0)*100)}%; background:${cov.confidence > 0.75 ? 'var(--accent)' : cov.confidence > 0.5 ? 'var(--warn)' : 'var(--danger)'}"></div></div>
+    ` : ''}
+    ${fraud.level ? `
+    <div class="section-label">Fraud Risk</div>
+    <div class="kv-row"><span class="kv-key">Risk Level</span><span class="kv-val"><span class="badge badge-${fraud.level === 'low' ? 'auto_approved' : fraud.level === 'medium' ? 'pending_review' : 'rejected'}">${fraud.level}</span></span></div>
+    <div class="risk-meter">${riskMeterHtml(fraud.score || 0)}</div>
+    ` : ''}
+    <div style="margin-top:16px;"><button class="btn btn-secondary" onclick="lookupAndShow('${d.claim_id}')">View Full Dossier →</button></div>
+  `;
+}
+
+function renderPipelineSteps(status) {
+  const steps = ['Doc Extract', 'Coverage', 'Fraud', 'Decision', 'Notify'];
+  const terminalStatuses = ['auto_approved', 'approved', 'rejected', 'pending_review', 'needs_info'];
+  const allDone = terminalStatuses.includes(status);
+  return `<div class="pipeline-steps">
+    ${steps.map((s, i) => `
+      <div class="pipe-step">
+        <div class="pipe-node ${allDone ? 'done' : i === 0 ? 'active' : ''}">${i+1}</div>
+        <div class="pipe-label">${s}</div>
+      </div>
+      ${i < steps.length - 1 ? `<div class="pipe-connector ${allDone ? 'done' : ''}"></div>` : ''}
+    `).join('')}
+  </div>`;
+}
+
+// ── QUEUE ─────────────────────────────────────────────────────────────────────
+async function loadQueue() {
+  const tbody = document.getElementById('queue-tbody');
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)"><div class="spinner" style="margin:0 auto"></div></td></tr>`;
+  try {
+    const r = await fetch(`${API_BASE}/api/v1/claims/queue/pending`);
+    const d = await r.json();
+    if (!d.claims.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p>No claims in queue — all caught up!</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = d.claims.map(c => `
+      <tr onclick="openDossier('${c.claim_id}')">
+        <td class="mono">${c.claim_id.slice(0, 8)}…</td>
+        <td>${c.claimant || '—'}</td>
+        <td class="amount">${c.amount ? '₹' + Number(c.amount).toLocaleString('en-IN') : '—'}</td>
+        <td>${c.fraud_risk ? `<span class="badge badge-${riskBadge(c.fraud_risk)}">${c.fraud_risk}</span>` : '—'}</td>
+        <td>${c.coverage_confidence ? `<span style="font-family:var(--font-mono)">${(c.coverage_confidence*100).toFixed(0)}%</span>` : '—'}</td>
+        <td><span class="badge badge-${c.status}">${c.status.replace('_', ' ')}</span></td>
+        <td class="mono">${formatDate(c.created_at)}</td>
+      </tr>`).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px;text-align:center">Failed to load queue: ${e.message}</td></tr>`;
+  }
+}
+
+// ── ALL CLAIMS ────────────────────────────────────────────────────────────────
+async function loadAllClaims() {
+  const tbody = document.getElementById('all-tbody');
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)"><div class="spinner" style="margin:0 auto"></div></td></tr>`;
+
+  // Fetch status for every known claim ID
+  const ids = [...new Set(allClaimsCache)];
+  if (!ids.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p>No claims submitted this session yet</p></div></td></tr>`;
+    updateMetrics([]);
+    return;
+  }
+
+  const results = await Promise.allSettled(ids.map(id =>
+    fetch(`${API_BASE}/api/v1/claims/${id}/status`).then(r => r.json())
+  ));
+  const claims = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+  updateMetrics(claims);
+
+  if (!claims.length) { tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No data</td></tr>`; return; }
+
+  tbody.innerHTML = claims.map(c => `
+    <tr onclick="openDossier('${c.claim_id}')">
+      <td class="mono">${c.claim_id.slice(0, 8)}…</td>
+      <td>${c.coverage?.claimant || '—'}</td>
+      <td>${c.coverage?.coverage_type || '—'}</td>
+      <td class="amount">${c.decision?.recommended_payout ? '₹' + Number(c.decision.recommended_payout).toLocaleString('en-IN') : '—'}</td>
+      <td>${c.decision?.action ? `<span class="badge badge-${c.decision.action}">${formatAction(c.decision.action)}</span>` : '—'}</td>
+      <td><span class="badge badge-${c.status}">${c.status.replace(/_/g, ' ')}</span></td>
+      <td class="mono">${formatDate(c.created_at)}</td>
+    </tr>`).join('');
+}
+
+function updateMetrics(claims) {
+  document.getElementById('m-total').textContent = claims.length;
+  document.getElementById('m-approved').textContent = claims.filter(c => c.status === 'auto_approved' || c.status === 'approved').length;
+  document.getElementById('m-pending').textContent = claims.filter(c => c.status === 'pending_review').length;
+  document.getElementById('m-rejected').textContent = claims.filter(c => c.status === 'rejected').length;
+}
+
+// ── LOOKUP ────────────────────────────────────────────────────────────────────
+async function lookupClaim() {
+  const id = document.getElementById('lookup-id').value.trim();
+  if (!id) { toast('Enter a claim ID', 'error'); return; }
+  await lookupAndShow(id);
+}
+
+async function lookupAndShow(claimId) {
+  document.getElementById('lookup-id').value = claimId;
+  showPage('lookup', document.querySelectorAll('.nav-item')[3]);
+  const el = document.getElementById('lookup-result');
+  el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)"><div class="spinner" style="margin:0 auto 12px"></div><p>Loading dossier...</p></div>`;
+  try {
+    const [statusR, dossierR] = await Promise.all([
+      fetch(`${API_BASE}/api/v1/claims/${claimId}/status`),
+      fetch(`${API_BASE}/api/v1/claims/${claimId}/dossier`)
+    ]);
+    const status = await statusR.json();
+    const dossier = await dossierR.json();
+    el.innerHTML = renderDossierCard(status, dossier);
+  } catch (e) {
+    el.innerHTML = `<div class="card" style="color:var(--danger)">Failed: ${e.message}</div>`;
+  }
+}
+
+function renderDossierCard(s, d) {
+  const dec = s.decision || {};
+  const cov = s.coverage || {};
+  const fraud = s.fraud_risk || {};
+  const claim = d.claim || {};
+  const extracted = claim.extracted_data || {};
+  const log = d.processing_log || [];
+  const citations = d.policy_citations || [];
+  const flags = fraud.flags || [];
+
+  return `<div class="card">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+      <div>
+        <div class="mono" style="margin-bottom:4px">${s.claim_id}</div>
+        <span class="badge badge-${s.status}">${s.status.replace(/_/g,' ')}</span>
+      </div>
+      <div class="btn-row" style="margin:0">
+        ${s.status === 'pending_review' || s.status === 'needs_info' ? `
+          <button class="btn btn-primary" onclick="adjusterAction('${s.claim_id}','approve')" style="background:var(--accent)">✓ Approve</button>
+          <button class="btn btn-secondary" onclick="adjusterAction('${s.claim_id}','reject')" style="border-color:var(--danger);color:var(--danger)">✗ Reject</button>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="section-label">AI Decision</div>
+    ${dec.action ? `<div class="decision-card decision-${dec.action}">
+      <div class="decision-action">${formatAction(dec.action)}</div>
+      <div class="decision-reason">${dec.reason || '—'}</div>
+      ${dec.recommended_payout ? `<div class="decision-payout">₹${Number(dec.recommended_payout).toLocaleString('en-IN')}</div>` : ''}
+      <div style="font-size:11px; color:var(--muted); font-family:var(--font-mono); margin-top:8px">confidence: ${((dec.confidence||0)*100).toFixed(0)}%</div>
+    </div>` : '<p style="color:var(--muted);font-size:13px">Decision pending...</p>'}
+
+    ${cov.is_covered !== undefined ? `
+    <div class="section-label">Coverage Analysis</div>
+    <div class="kv-row"><span class="kv-key">Covered</span><span class="kv-val" style="color:${cov.is_covered?'var(--accent)':'var(--danger)'}">${cov.is_covered?'Yes':'No'}</span></div>
+    <div class="kv-row"><span class="kv-key">Confidence</span><span class="kv-val">${((cov.confidence||0)*100).toFixed(0)}%</span></div>
+    <div class="confidence-bar"><div class="confidence-fill" style="width:${(cov.confidence||0)*100}%;background:${cov.confidence>0.75?'var(--accent)':cov.confidence>0.5?'var(--warn)':'var(--danger)'}"></div></div>
+    ${cov.deductible ? `<div class="kv-row"><span class="kv-key">Deductible</span><span class="kv-val amount">₹${Number(cov.deductible).toLocaleString('en-IN')}</span></div>` : ''}
+    ${(cov.exclusions||[]).length ? `<div class="kv-row"><span class="kv-key">Exclusions</span><span class="kv-val" style="color:var(--danger)">${cov.exclusions.join(', ')}</span></div>` : ''}
+    ${d.coverage_reasoning ? `<div class="citation-block">${d.coverage_reasoning}</div>` : ''}
+    ` : ''}
+
+    ${citations.length ? `
+    <div class="section-label">Policy Citations</div>
+    ${citations.map(c => `<div class="citation-block">p.${c.page || '?'} — ${c.text || ''}</div>`).join('')}
+    ` : ''}
+
+    ${fraud.level ? `
+    <div class="section-label">Fraud Assessment</div>
+    <div class="kv-row"><span class="kv-key">Risk Level</span><span class="kv-val"><span class="badge badge-${riskBadge(fraud.level)}">${fraud.level}</span></span></div>
+    <div class="risk-meter">${riskMeterHtml(fraud.score||0)}</div>
+    ${flags.length ? `<div class="flags-list">${flags.map(f=>`<span class="flag-chip">${f}</span>`).join('')}</div>` : ''}
+    ${d.fraud_reasoning ? `<div class="citation-block" style="margin-top:8px">${d.fraud_reasoning}</div>` : ''}
+    ` : ''}
+
+    ${extracted.claimant_name ? `
+    <div class="section-label">Extracted Claim Data</div>
+    <div class="kv-row"><span class="kv-key">Claimant</span><span class="kv-val">${extracted.claimant_name}</span></div>
+    <div class="kv-row"><span class="kv-key">Policy No.</span><span class="kv-val mono">${extracted.policy_number||'—'}</span></div>
+    <div class="kv-row"><span class="kv-key">Date of Loss</span><span class="kv-val">${extracted.date_of_loss||'—'}</span></div>
+    <div class="kv-row"><span class="kv-key">Incident Type</span><span class="kv-val">${extracted.incident_type||'—'}</span></div>
+    <div class="kv-row"><span class="kv-key">Claimed Amount</span><span class="kv-val amount">${extracted.claimed_amount?'₹'+Number(extracted.claimed_amount).toLocaleString('en-IN'):'—'}</span></div>
+    ` : ''}
+
+    ${log.length ? `
+    <div class="section-label">Audit Trail</div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px;">
+      ${log.map(l => `<div class="log-line"><span>${new Date().toLocaleTimeString()}</span> ${l}</div>`).join('')}
+    </div>
+    ` : ''}
+  </div>`;
+}
+
+// ── ADJUSTER ACTIONS ──────────────────────────────────────────────────────────
+async function adjusterAction(claimId, action) {
+  try {
+    const r = await fetch(`${API_BASE}/api/v1/claims/${claimId}/review`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ override_decision: action, adjuster_notes: `Manual ${action} by adjuster via dashboard` })
+    });
+    const d = await r.json();
+    toast(`Claim ${action}d successfully`, action === 'approve' ? 'success' : 'info');
+    lookupAndShow(claimId);
+    loadQueue();
+  } catch (e) {
+    toast('Action failed: ' + e.message, 'error');
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function riskBadge(level) {
+  return level === 'low' ? 'auto_approved' : level === 'medium' ? 'pending_review' : 'rejected';
+}
+
+function riskMeterHtml(score) {
+  const filled = Math.round(score * 10);
+  const isHigh = score > 0.6, isMed = score > 0.3;
+  const cls = isHigh ? 'fill-high' : isMed ? 'fill-med' : 'fill-low';
+  return Array.from({length:10}, (_,i) => `<div class="risk-seg ${i < filled ? cls : ''}"></div>`).join('');
+}
+
+function formatAction(action) {
+  const map = { auto_approve:'Auto Approved', escalate_review:'Escalate to Adjuster', request_info:'Request More Info', reject:'Rejected — Not Covered', approved:'Approved', rejected:'Rejected', pending_review:'Pending Review', needs_info:'Needs Information', auto_approved:'Auto Approved' };
+  return map[action] || action;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────────────────────
+async function openDossier(claimId) {
+  await lookupAndShow(claimId);
+}
+
+function closeDetail(e) {
+  if (e.target === document.getElementById('detail-overlay'))
+    document.getElementById('detail-overlay').classList.remove('open');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// Set today as default date
+document.getElementById('f-date').valueAsDate = new Date();
+</script>
+</body>
+</html>

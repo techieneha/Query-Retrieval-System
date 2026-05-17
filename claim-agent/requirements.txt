@@ -1,0 +1,43 @@
+# ── Existing PolicyAI dependencies (keep as-is) ──────────────────────────────
+fastapi
+uvicorn[standard]
+pinecone-client
+redis
+sentence-transformers   # BGE embeddings
+mistralai               # Mistral API (existing)
+pdfplumber
+python-multipart
+
+# ── Agentic Claim Processing additions (all open source) ─────────────────────
+
+# LangGraph — agent orchestration state machine (Apache 2.0)
+langgraph>=0.2.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+
+# Ollama integration — run LLMs locally (MIT)
+# Install Ollama: https://ollama.com → then: ollama pull mistral
+langchain-ollama>=0.1.0
+
+# Async HTTP for calling your existing PolicyAI endpoints
+httpx>=0.27.0
+
+# Pydantic v2 — already used by FastAPI, ensure v2
+pydantic>=2.0.0
+
+# OCR — open source document extraction (Apache 2.0)
+# pytesseract  # uncomment for local OCR (requires: apt install tesseract-ocr)
+# pdfplumber   # already in PolicyAI requirements
+
+# PostgreSQL (for production claims store, replacing in-memory dict)
+# asyncpg>=0.29.0
+# sqlalchemy[asyncio]>=2.0.0
+# alembic>=1.13.0         # migrations
+
+# Celery + Redis for async task queue in production
+# celery[redis]>=5.3.0    # uncomment when scaling beyond single server
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+httpx                   # for TestClient
