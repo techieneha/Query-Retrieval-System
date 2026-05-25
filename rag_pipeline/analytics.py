@@ -1,99 +1,74 @@
-from datetime import datetime, timedelta
-from collections import defaultdict
-from typing import List, Dict
-import statistics
-import logging
+"""rag_pipeline/analytics.py — lightweight in-Redis metrics."""
+import os, json, time
+from datetime import datetime
+from typing import Optional
+import redis
+from loguru import logger
 
-logger = logging.getLogger(__name__)
-
-
-class AnalyticsTracker:
-    """Track query performance and patterns"""
-    
+class Analytics:
     def __init__(self):
-        self.queries = []
-        self.max_history = 1000
-        
-    def log_query(self, data: dict):
-        """Log query with metadata"""
-        self.queries.append({
-            **data,
-            'timestamp': datetime.now()
-        })
-        
-        if len(self.queries) > self.max_history:
-            self.queries = self.queries[-self.max_history:]
-    
-    def get_stats(self, hours: int = 24) -> dict:
-        """Get analytics for past N hours"""
-        cutoff = datetime.now() - timedelta(hours=hours)
-        recent = [q for q in self.queries if q['timestamp'] > cutoff]
-        
-        if not recent:
-            return {
-                'total_queries': 0,
-                'time_range_hours': hours,
-                'message': 'No queries in this time period'
-            }
-        
-        latencies = [q['latency'] for q in recent]
-        confidences = [q['confidence'] for q in recent]
-        cached = sum(1 for q in recent if q.get('cached', False))
-        
-        quality_counts = defaultdict(int)
-        for q in recent:
-            quality_counts[q.get('quality', 'unknown')] += 1
-        
-        latencies_sorted = sorted(latencies)
-        
-        def percentile(data, p):
-            idx = int(len(data) * p)
-            return data[min(idx, len(data) - 1)]
-        
+        self._r: Optional[redis.Redis] = None
+
+    @property
+    def r(self):
+        if self._r is None:
+            try:
+                r = redis.Redis(host=os.getenv("REDIS_HOST","localhost"),
+                                port=int(os.getenv("REDIS_PORT",6379)),
+                                decode_responses=True)
+                r.ping(); self._r = r
+            except Exception:
+                self._r = False
+        return self._r if self._r else None
+
+    def log_upload(self, file_id: str, filename: str):
+        if not self.r: return
+        self.r.incr("stats:uploads")
+        self.r.lpush("recent:uploads", json.dumps({
+            "file_id": file_id, "filename": filename,
+            "ts": datetime.now().isoformat()
+        }))
+        self.r.ltrim("recent:uploads", 0, 49)
+
+    def log_query(self, file_id: str, question: str, confidence: float,
+                  latency_ms: int = 0, cached: bool = False):
+        if not self.r: return
+        self.r.incr("stats:queries")
+        if cached: self.r.incr("stats:cache_hits")
+        self.r.lpush("recent:queries", json.dumps({
+            "file_id": file_id, "question": question[:80],
+            "confidence": confidence, "latency_ms": latency_ms,
+            "cached": cached, "ts": datetime.now().isoformat()
+        }))
+        self.r.ltrim("recent:queries", 0, 99)
+        # rolling avg confidence
+        self.r.lpush("confidences", confidence)
+        self.r.ltrim("confidences", 0, 99)
+
+    def log_claim(self, claim_id: str, policy_number: str):
+        if not self.r: return
+        self.r.incr("stats:claims")
+        self.r.lpush("recent:claims", json.dumps({
+            "claim_id": claim_id, "policy_number": policy_number,
+            "ts": datetime.now().isoformat()
+        }))
+        self.r.ltrim("recent:claims", 0, 49)
+
+    def get_stats(self) -> dict:
+        if not self.r:
+            return {"error": "Redis unavailable"}
+        queries    = int(self.r.get("stats:queries") or 0)
+        uploads    = int(self.r.get("stats:uploads") or 0)
+        claims     = int(self.r.get("stats:claims")  or 0)
+        cache_hits = int(self.r.get("stats:cache_hits") or 0)
+        confidences= [float(c) for c in (self.r.lrange("confidences",0,99) or [])]
+        avg_conf   = round(sum(confidences)/len(confidences), 3) if confidences else 0
         return {
-            'total_queries': len(recent),
-            'time_range_hours': hours,
-            'latency': {
-                'mean': round(statistics.mean(latencies), 3),
-                'median': round(statistics.median(latencies), 3),
-                'p95': round(percentile(latencies_sorted, 0.95), 3),
-                'p99': round(percentile(latencies_sorted, 0.99), 3),
-                'min': round(min(latencies), 3),
-                'max': round(max(latencies), 3)
-            },
-            'confidence': {
-                'mean': round(statistics.mean(confidences), 3),
-                'median': round(statistics.median(confidences), 3),
-                'min': round(min(confidences), 3),
-                'max': round(max(confidences), 3)
-            },
-            'cache': {
-                'hits': cached,
-                'misses': len(recent) - cached,
-                'hit_rate': round(cached / len(recent) * 100, 2)
-            },
-            'quality_distribution': dict(quality_counts),
-            'queries_per_hour': round(len(recent) / hours, 2)
+            "total_queries":  queries,
+            "total_uploads":  uploads,
+            "total_claims":   claims,
+            "cache_hit_rate": round(cache_hits / max(queries,1), 3),
+            "avg_confidence": avg_conf,
+            "recent_queries": [json.loads(q) for q in (self.r.lrange("recent:queries",0,9) or [])],
+            "recent_claims":  [json.loads(c) for c in (self.r.lrange("recent:claims",0,9)  or [])],
         }
-    
-    def get_popular_queries(self, limit: int = 10) -> List[Dict]:
-        """Get most common queries"""
-        query_counts = defaultdict(int)
-        
-        for q in self.queries:
-            normalized = q['query'].lower().strip()
-            query_counts[normalized] += 1
-        
-        sorted_queries = sorted(
-            query_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:limit]
-        
-        return [
-            {'query': query, 'count': count}
-            for query, count in sorted_queries
-        ]
-
-
-analytics_tracker = AnalyticsTracker()

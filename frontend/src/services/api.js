@@ -1,71 +1,78 @@
-import axios from 'axios';
+// frontend/src/services/api.js
+const BASE = '/api';   // proxied by Vite to http://localhost:8000
 
-const API_BASE = 'http://127.0.0.1:8000';
-
-class PolicyAIAPI {
-  constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE,
-      timeout: 30000,
-    });
-  }
-
-  async healthCheck() {
-    try {
-      const response = await this.client.get('/health');
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async uploadFile(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await this.client.post('/api/v1/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 120000, // 2 minutes for large files
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async queryDocument(fileId, question) {
-    try {
-      const response = await this.client.post('/api/v1/query', {
-        file_id: fileId,
-        questions: [question],
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async checkFileStatus(fileId) {
-    try {
-      const response = await this.client.get(`/api/v1/files/${fileId}`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  handleError(error) {
-    if (error.code === 'ECONNREFUSED') {
-      return new Error('Backend server is offline. Please start the server with: python api/main.py');
-    }
-    if (error.response) {
-      return new Error(error.response.data.detail || `Server error: ${error.response.status}`);
-    }
-    return new Error(error.message || 'Network error occurred');
-  }
+// ── RAG endpoints ─────────────────────────────────────────────────
+export async function uploadPolicy(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/v1/upload`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
+  return res.json(); // { file_id, filename, pages, status }
 }
 
-export const api = new PolicyAIAPI();
+export async function listFiles() {
+  const res = await fetch(`${BASE}/v1/files`);
+  if (!res.ok) throw new Error('Failed to load files');
+  return res.json();
+}
+
+export async function queryPolicy(fileId, questions) {
+  const res = await fetch(`${BASE}/v1/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_id: fileId, questions }),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || 'Query failed');
+  return res.json();
+}
+
+// ── Chat / claims endpoints ───────────────────────────────────────
+export async function startSession({ fileId, policyNumber, claimantName }) {
+  const res = await fetch(`${BASE}/v1/chat/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      file_id:       fileId,
+      policy_number: policyNumber,
+      claimant_name: claimantName,
+    }),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || 'Session start failed');
+  return res.json(); // { session_id, greeting }
+}
+
+export async function sendMessage(sessionId, message) {
+  const res = await fetch(`${BASE}/v1/chat/message`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, message }),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || 'Message failed');
+  return res.json();
+}
+
+/**
+ * Async generator that yields SSE chunks from the stream endpoint.
+ * Each chunk: { token, done, type } or { done:true, claim_id, mode }
+ */
+export async function* streamMessage(sessionId, message) {
+  const url = `${BASE}/v1/chat/${sessionId}/stream?message=${encodeURIComponent(message)}`;
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error('Stream request failed');
+
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let   buffer  = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try { yield JSON.parse(line.slice(6)); } catch { /* skip */ }
+    }
+  }
+}

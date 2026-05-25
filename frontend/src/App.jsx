@@ -1,319 +1,137 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { api } from './services/api';
+// frontend/src/App.jsx
+import { useRef, useEffect, useState } from 'react';
+import Sidebar          from './components/Sidebar.jsx';
+import TopBar           from './components/TopBar.jsx';
+import Message          from './components/Message.jsx';
+import TypingIndicator  from './components/TypingIndicator.jsx';
+import ChatInput        from './components/ChatInput.jsx';
+import EmptyState       from './components/EmptyState.jsx';
+import { useChat }      from './hooks/UseChat.js';
 
-function App() {
-  const [backendStatus, setBackendStatus] = useState('checking');
-  const [fileId, setFileId] = useState(localStorage.getItem('policyai_fileId'));
-  const [uploadedFile, setUploadedFile] = useState(() => {
-    const saved = localStorage.getItem('policyai_fileInfo');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('policyai_messages');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [inputMessage, setInputMessage] = useState('');
+const S = {
+  app: {
+    display: 'grid',
+    gridTemplateColumns: '272px 1fr',
+    height: '100vh',
+    overflow: 'hidden',
+  },
+  chatArea: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    background: '#f7f3ec',
+    overflow: 'hidden',
+  },
+  messages: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '24px 28px 12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
+  },
+  toast: (show) => ({
+    position: 'fixed', bottom: '1.8rem', right: '1.8rem',
+    background: '#12100e', color: '#f7f3ec',
+    padding: '10px 18px', borderRadius: 10,
+    fontSize: '0.82rem', fontFamily: 'DM Sans, sans-serif',
+    borderLeft: '3px solid #c99034',
+    opacity: show ? 1 : 0,
+    transform: show ? 'translateY(0)' : 'translateY(8px)',
+    transition: 'all 0.25s',
+    pointerEvents: 'none', zIndex: 99,
+    maxWidth: 320,
+  }),
+};
 
-  const checkBackend = useCallback(async () => {
-    try {
-      await api.healthCheck();
-      setBackendStatus('connected');
-    } catch (error) {
-      setBackendStatus('disconnected');
-      console.error('Backend connection failed:', error);
-    }
-  }, []);
+export default function App() {
+  const {
+    sessionId, messages, mode, isStreaming,
+    isStarting, claimId, error, start, send, reset,
+  } = useChat();
 
+  const [sessionMeta, setSessionMeta] = useState({ policyNumber:'', claimantName:'' });
+  const [toast,       setToast]       = useState({ show: false, msg: '' });
+  const bottomRef = useRef(null);
+
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
-    checkBackend();
-    const interval = setInterval(checkBackend, 10000);
-    return () => clearInterval(interval);
-  }, [checkBackend]);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isStreaming]);
 
-  
-  const saveState = useCallback(() => {
-    if (fileId) localStorage.setItem('policyai_fileId', fileId);
-    if (uploadedFile) localStorage.setItem('policyai_fileInfo', JSON.stringify(uploadedFile));
-    localStorage.setItem('policyai_messages', JSON.stringify(messages));
-  }, [fileId, uploadedFile, messages]);
-
+  // Show error as toast
   useEffect(() => {
-    saveState();
-  }, [saveState]);
+    if (error) showToast('❌ ' + error);
+  }, [error]);
 
-  const addMessage = useCallback((type, content, meta = null) => {
-    const newMessage = { type, content, meta, timestamp: new Date().toLocaleTimeString() };
-    setMessages(prev => [...prev, newMessage]);
-  }, []);
+  function showToast(msg, ms = 3500) {
+    setToast({ show: true, msg });
+    setTimeout(() => setToast({ show: false, msg: '' }), ms);
+  }
 
-  const handleFileUpload = async (file) => {
-    if (backendStatus !== 'connected') {
-      addMessage('error', 'Backend server is offline. Please start the server first.');
-      return;
-    }
-
-    setIsProcessing(true);
-    addMessage('system', `📤 Uploading "${file.name}"...`);
-
+  async function handleSessionStart({ fileId, policyNumber, claimantName }) {
     try {
-      const result = await api.uploadFile(file);
-      
-      const fileInfo = {
-        name: file.name,
-        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-        uploadTime: new Date().toLocaleTimeString(),
-        fileId: result.file_id
-      };
-
-      setFileId(result.file_id);
-      setUploadedFile(fileInfo);
-      addMessage('system', `✅ Document uploaded successfully! You can now ask questions.`);
-      
-    } catch (error) {
-      addMessage('error', `Upload failed: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
+      await start({ fileId, policyNumber, claimantName });
+      setSessionMeta({ policyNumber, claimantName });
+      showToast('✅ Connected! Ask me anything about your policy.');
+    } catch (e) {
+      showToast('❌ ' + e.message);
+      throw e;
     }
-  };
+  }
 
-  const handleSendMessage = async (message) => {
-    if (!fileId || backendStatus !== 'connected') return;
+  async function handleSend(text) {
+    if (!sessionId) return;
+    await send(text);
+  }
 
-    setIsProcessing(true);
-    addMessage('user', message);
-    setInputMessage('');
-
-    try {
-      const startTime = Date.now();
-      const result = await api.queryDocument(fileId, message);
-      const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
-
-      if (result.answers && result.answers.length > 0) {
-        addMessage('assistant', result.answers[0], { processingTime });
-      } else {
-        throw new Error('No answer received');
-      }
-    } catch (error) {
-      addMessage('error', `Query failed: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSampleQuestion = (question) => {
-    if (fileId && backendStatus === 'connected' && !isProcessing) {
-      handleSendMessage(question);
-    }
-  };
-
-  const clearChat = () => {
-    setMessages([]);
-    setUploadedFile(null);
-    setFileId(null);
-    localStorage.removeItem('policyai_fileId');
-    localStorage.removeItem('policyai_fileInfo');
-    localStorage.removeItem('policyai_messages');
-  };
-
-  const sampleQuestions = [
-    "What's covered under this policy?",
-    "What are the exclusions?",
-    "What is the claims process?",
-    "Are pre-existing conditions covered?",
-    "What is the premium amount?",
-    "What's the policy duration?"
-  ];
+  function handleQuickReply(text) {
+    if (sessionId && !isStreaming) send(text);
+  }
 
   return (
-    <div className="insurance-app">
-      
-      <header className="insurance-header">
-        <div className="header-content">
-          <div className="brand">
-            <div className="brand-icon">
-              <i className="fas fa-shield-alt"></i>
-            </div>
-            <div className="brand-text">
-              <h1>PolicyAI</h1>
-              <div className="tagline">Insurance Document Intelligence</div>
-            </div>
-          </div>
-          <div className="status-indicator">
-            <div className={`status-dot ${backendStatus === 'connected' ? 'ready' : backendStatus === 'disconnected' ? 'error' : 'processing'}`}></div>
-            <span>
-              {backendStatus === 'connected' ? 'Connected' : 
-               backendStatus === 'disconnected' ? 'Offline' : 'Checking...'}
-            </span>
-          </div>
-        </div>
-      </header>
+    <div style={S.app}>
+      {/* Sidebar */}
+      <Sidebar
+        onSessionStart={handleSessionStart}
+        onSuggestion={text => !isStreaming && sessionId && send(text)}
+        connected={!!sessionId}
+      />
 
-      
-      <main className="insurance-layout">
-        
-        <aside className="document-sidebar">
-          
-          <div className="upload-card" onClick={() => document.getElementById('fileInput')?.click()}>
-            <div className="upload-icon">
-              <i className="fas fa-cloud-upload-alt"></i>
-            </div>
-            <div className="upload-text">
-              <h3>Upload Policy Document</h3>
-              <p>Drag & drop your insurance PDF or click to browse</p>
-            </div>
-            <input
-              id="fileInput"
-              type="file"
-              accept=".pdf"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file && file.type === 'application/pdf') {
-                  handleFileUpload(file);
-                }
-                e.target.value = '';
-              }}
-              disabled={backendStatus !== 'connected' || isProcessing}
-              style={{ display: 'none' }}
-            />
-          </div>
+      {/* Main chat */}
+      <div style={S.chatArea}>
+        <TopBar
+          policyNumber={sessionMeta.policyNumber}
+          claimantName={sessionMeta.claimantName}
+          mode={mode}
+          claimId={claimId}
+          sessionId={sessionId}
+        />
 
-          
-          {uploadedFile && (
-            <div className="document-list">
-              <div className="section-title">
-                <i className="fas fa-file-pdf"></i>
-                <span>Current Document</span>
-              </div>
-              <div className="document-item active">
-                <div className="doc-icon">
-                  <i className="fas fa-file-pdf"></i>
-                </div>
-                <div className="doc-info">
-                  <div className="doc-name">{uploadedFile.name}</div>
-                  <div className="doc-meta">
-                    <span>{uploadedFile.size}</span>
-                    <span>Uploaded</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          
-          <div className="quick-questions">
-            <div className="section-title">
-              <i className="fas fa-bolt"></i>
-              <span>Quick Questions</span>
-            </div>
-            <div className="question-grid">
-              {sampleQuestions.map((question, index) => (
-                <button
-                  key={index}
-                  className="question-btn"
-                  onClick={() => handleSampleQuestion(question)}
-                  disabled={!fileId || backendStatus !== 'connected' || isProcessing}
-                >
-                  <i className="fas fa-play"></i>
-                  {question}
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        
-        <section className="chat-interface">
-          <div className="chat-header">
-            <h2>Policy Analysis</h2>
-            <div className="status-indicator">
-              <div className={`status-dot ${!fileId ? 'error' : isProcessing ? 'processing' : 'ready'}`}></div>
-              <span>
-                {!fileId ? 'Upload a document to start' : 
-                 isProcessing ? 'Processing...' : 'Ready for questions'}
-              </span>
-            </div>
-          </div>
-
-          <div className="chat-messages">
-            {messages.length === 0 ? (
-              <div className="welcome-message">
-                <div className="message assistant">
-                  <div className="message-avatar">
-                    <i className="fas fa-robot"></i>
-                  </div>
-                  <div className="message-content">
-                    <div className="message-text">
-                      Welcome! Upload an insurance policy PDF and I'll help you understand the coverage, 
-                      exclusions, claims process, and answer any specific questions you have about the document.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              messages.map((message, index) => (
-                <div key={index} className={`message ${message.type}`}>
-                  <div className="message-avatar">
-                    {message.type === 'user' ? (
-                      <i className="fas fa-user"></i>
-                    ) : message.type === 'error' ? (
-                      <i className="fas fa-exclamation-triangle"></i>
-                    ) : (
-                      <i className="fas fa-robot"></i>
-                    )}
-                  </div>
-                  <div className="message-content">
-                    <div className="message-text">{message.content}</div>
-                    <div className="message-time">{message.timestamp}</div>
-                    {message.meta?.processingTime && (
-                      <div className="processing-time">
-                        ⏱️ {message.meta.processingTime}s
-                      </div>
-                    )}
-                  </div>
-                </div>
+        <div style={S.messages}>
+          {messages.length === 0 && !sessionId
+            ? <EmptyState />
+            : messages.map(msg => (
+                <Message
+                  key={msg.id}
+                  message={msg}
+                  onQuickReply={handleQuickReply}
+                />
               ))
-            )}
-          </div>
+          }
+          {/* Typing indicator while streaming starts */}
+          {isStreaming && messages.at(-1)?.role !== 'assistant' && <TypingIndicator />}
+          <div ref={bottomRef} />
+        </div>
 
-        <button className="clear-chat-button" onClick={clearChat} disabled={messages.length === 0}>
-          Start Again
-        </button>
-          <div className="chat-input-area">
-            <div className="input-group">
-              <textarea
-                className="chat-input"
-                placeholder={!fileId ? "Upload a document to ask questions..." : "Ask about coverage, claims, exclusions..."}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (inputMessage.trim() && !isProcessing && fileId) {
-                      handleSendMessage(inputMessage.trim());
-                    }
-                  }
-                }}
-                disabled={!fileId || isProcessing || backendStatus !== 'connected'}
-                rows="1"
-              />
-              <button
-                className="send-button"
-                onClick={() => {
-                  if (inputMessage.trim() && !isProcessing && fileId) {
-                    handleSendMessage(inputMessage.trim());
-                  }
-                }}
-                disabled={!fileId || isProcessing || !inputMessage.trim() || backendStatus !== 'connected'}
-              >
-                <i className="fas fa-paper-plane"></i>
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
+        <ChatInput
+          onSend={handleSend}
+          disabled={!sessionId || isStreaming}
+        />
+      </div>
+
+      {/* Toast */}
+      <div style={S.toast(toast.show)}>{toast.msg}</div>
     </div>
   );
 }
-
-export default App;
