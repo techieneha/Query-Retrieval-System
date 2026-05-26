@@ -1,71 +1,130 @@
 // frontend/src/components/Sidebar.jsx
 import { useState, useRef } from 'react';
-import { uploadPolicy, listFiles } from '../services/api';
+import { uploadPolicy } from '../services/api';
 
 const S = {
   sidebar: {
-    width: 272, flexShrink: 0, background: '#12100e',
-    display: 'flex', flexDirection: 'column',
-    borderRight: '3px solid #b07d2a', overflow: 'hidden',
+    width: 272,
+    flexShrink: 0,
+    background: 'white',
+    borderRight: '1px solid #e2e8f0',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
   },
   header: {
-    padding: '26px 22px 18px',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    padding: '20px 22px 16px',
+    borderBottom: '1px solid #e2e8f0',
   },
   logo: {
-    fontFamily: 'Instrument Serif, Georgia, serif',
-    fontSize: '1.7rem', color: '#f7f3ec', lineHeight: 1,
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: '1.3rem',
+    fontWeight: 700,
+    color: '#1e40af',
     letterSpacing: '-0.02em',
   },
-  logoAccent: { color: '#c99034' },
+  logoAccent: { color: '#3b82f6' },
   logoSub: {
-    fontSize: '0.68rem', textTransform: 'uppercase',
-    letterSpacing: '0.13em', color: '#7a756c', marginTop: 4,
+    fontSize: '0.68rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.12em',
+    color: '#64748b',
+    marginTop: 4,
   },
-  body: { padding: '18px 18px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 },
-  section: { display: 'flex', flexDirection: 'column', gap: 8 },
+  body: {
+    padding: '18px',
+    flex: 1,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
+  },
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
   sectionTitle: {
-    fontSize: '0.68rem', textTransform: 'uppercase',
-    letterSpacing: '0.12em', color: '#7a756c',
+    fontSize: '0.7rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em',
+    color: '#64748b',
+    fontWeight: 600,
   },
   dropZone: (drag) => ({
-    border: `2px dashed ${drag ? '#c99034' : 'rgba(255,255,255,0.15)'}`,
-    borderRadius: 10, padding: '14px 12px', textAlign: 'center',
-    cursor: 'pointer', color: drag ? '#f7f3ec' : '#7a756c',
-    fontSize: '0.82rem', transition: 'all 0.2s',
+    border: `2px dashed ${drag ? '#3b82f6' : '#cbd5e1'}`,
+    borderRadius: 10,
+    padding: '16px 12px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    color: drag ? '#1e40af' : '#475569',
+    fontSize: '0.82rem',
+    transition: 'all 0.2s',
+    background: '#f8fafc',
   }),
-  dropIcon: { fontSize: '1.4rem', marginBottom: 4 },
-  field: { display: 'flex', flexDirection: 'column', gap: 5 },
-  label: { fontSize: '0.75rem', color: '#c8c3b8' },
+  dropIcon: { fontSize: '1.3rem', marginBottom: 4 },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  label: {
+    fontSize: '0.75rem',
+    color: '#475569',
+    fontWeight: 500,
+  },
   input: {
-    background: 'rgba(255,255,255,0.07)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 8, padding: '8px 10px',
-    color: '#f7f3ec', fontSize: '0.83rem',
-    fontFamily: 'DM Sans, sans-serif', outline: 'none',
+    background: '#f8fafc',
+    border: '1px solid #cbd5e1',
+    borderRadius: 8,
+    padding: '8px 10px',
+    color: '#0f172a',
+    fontSize: '0.85rem',
+    fontFamily: 'Inter, sans-serif',
+    outline: 'none',
+    transition: 'border-color 0.2s',
   },
   btn: (disabled) => ({
-    background: disabled ? 'rgba(255,255,255,0.08)' : '#1a6b6b',
-    color: disabled ? '#7a756c' : 'white',
-    border: 'none', borderRadius: 9, padding: '10px 0',
-    fontSize: '0.88rem', fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
-    fontFamily: 'DM Sans, sans-serif', transition: 'background 0.2s', width: '100%',
+    background: disabled ? '#cbd5e1' : '#3b82f6',
+    color: disabled ? '#64748b' : 'white',
+    border: 'none',
+    borderRadius: 8,
+    padding: '10px 0',
+    fontSize: '0.88rem',
+    fontWeight: 600,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontFamily: 'Inter, sans-serif',
+    transition: 'background 0.2s',
+    width: '100%',
+    marginTop: 6,
   }),
   chip: {
-    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 7, padding: '7px 10px', color: '#c8c3b8',
-    fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.15s',
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: 8,
+    padding: '8px 12px',
+    color: '#1e293b',
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
   },
   statusBar: {
-    padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.06)',
-    display: 'flex', alignItems: 'center', gap: 8,
-    fontSize: '0.72rem', color: '#7a756c',
+    padding: '12px 18px',
+    borderTop: '1px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: '0.75rem',
+    color: '#64748b',
+    background: '#f8fafc',
   },
   dot: (live) => ({
-    width: 7, height: 7, borderRadius: '50%',
-    background: live ? '#22c55e' : '#7a756c',
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    background: live ? '#22c55e' : '#94a3b8',
     boxShadow: live ? '0 0 6px #22c55e' : 'none',
-    transition: 'all 0.3s', flexShrink: 0,
+    transition: 'all 0.3s',
   }),
 };
 
@@ -78,13 +137,13 @@ const SUGGESTIONS = [
 ];
 
 export default function Sidebar({ onSessionStart, onSuggestion, connected }) {
-  const [file,          setFile]          = useState(null);
-  const [policy,        setPolicy]        = useState('');
-  const [name,          setName]          = useState('');
-  const [drag,          setDrag]          = useState(false);
-  const [uploading,     setUploading]     = useState(false);
-  const [uploadMsg,     setUploadMsg]     = useState('Upload policy PDF');
-  const [statusMsg,     setStatusMsg]     = useState('Not connected');
+  const [file, setFile] = useState(null);
+  const [policy, setPolicy] = useState('');
+  const [name, setName] = useState('');
+  const [drag, setDrag] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState('Upload policy PDF');
+  const [statusMsg, setStatusMsg] = useState('Not connected');
   const fileRef = useRef();
 
   const ready = file && policy.trim() && name.trim();
@@ -113,7 +172,9 @@ export default function Sidebar({ onSessionStart, onSuggestion, connected }) {
   return (
     <aside style={S.sidebar}>
       <div style={S.header}>
-        <div style={S.logo}>Policy<span style={S.logoAccent}>AI</span></div>
+        <div style={S.logo}>
+          Policy<span style={S.logoAccent}>AI</span>
+        </div>
         <div style={S.logoSub}>Claims Assistant</div>
       </div>
 
@@ -124,44 +185,83 @@ export default function Sidebar({ onSessionStart, onSuggestion, connected }) {
           <div
             style={S.dropZone(drag)}
             onClick={() => fileRef.current?.click()}
-            onDragOver={e => { e.preventDefault(); setDrag(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDrag(true);
+            }}
             onDragLeave={() => setDrag(false)}
-            onDrop={e => { e.preventDefault(); setDrag(false); handleFile(e.dataTransfer.files[0]); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDrag(false);
+              handleFile(e.dataTransfer.files[0]);
+            }}
           >
             <div style={S.dropIcon}>📄</div>
             <div>{uploadMsg}</div>
-            <div style={{ fontSize: '0.72rem', marginTop: 2, opacity: 0.6 }}>PDF only</div>
+            <div style={{ fontSize: '0.7rem', marginTop: 2, opacity: 0.6 }}>PDF only</div>
           </div>
-          <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }}
-            onChange={e => handleFile(e.target.files[0])} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf"
+            style={{ display: 'none' }}
+            onChange={(e) => handleFile(e.target.files[0])}
+          />
         </div>
 
         {/* Fields */}
         <div style={S.field}>
           <label style={S.label}>Policy Number</label>
-          <input style={S.input} value={policy} placeholder="POL-2024-001"
-            onChange={e => setPolicy(e.target.value)} />
+          <input
+            style={S.input}
+            value={policy}
+            placeholder="POL-2024-001"
+            onChange={(e) => setPolicy(e.target.value)}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+          />
         </div>
         <div style={S.field}>
           <label style={S.label}>Your Name</label>
-          <input style={S.input} value={name} placeholder="Full name"
-            onChange={e => setName(e.target.value)} />
+          <input
+            style={S.input}
+            value={name}
+            placeholder="Full name"
+            onChange={(e) => setName(e.target.value)}
+            onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+            onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+          />
         </div>
 
-        <button style={S.btn(!ready || uploading || connected)} disabled={!ready || uploading || connected}
-          onClick={handleStart}>
+        <button
+          style={S.btn(!ready || uploading || connected)}
+          disabled={!ready || uploading || connected}
+          onClick={handleStart}
+        >
           {uploading ? '⏳ Setting up…' : connected ? '✓ Connected' : 'Start Conversation'}
         </button>
 
         {/* Suggestions */}
         <div style={S.section}>
           <div style={S.sectionTitle}>Try asking…</div>
-          {SUGGESTIONS.map(s => (
-            <div key={s} style={S.chip}
+          {SUGGESTIONS.map((s) => (
+            <div
+              key={s}
+              style={S.chip}
               onClick={() => connected && onSuggestion(s)}
-              onMouseEnter={e => { e.currentTarget.style.background='rgba(26,107,107,0.2)'; e.currentTarget.style.color='#f7f3ec'; }}
-              onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.05)'; e.currentTarget.style.color='#c8c3b8'; }}
-            >{s}</div>
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#eff6ff';
+                e.currentTarget.style.borderColor = '#3b82f6';
+                e.currentTarget.style.color = '#1e40af';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.color = '#1e293b';
+              }}
+            >
+              {s}
+            </div>
           ))}
         </div>
       </div>

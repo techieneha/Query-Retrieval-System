@@ -19,7 +19,7 @@ const S = {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
-    background: '#f7f3ec',
+    background: '#f8fafc',
     overflow: 'hidden',
   },
   messages: {
@@ -51,7 +51,13 @@ export default function App() {
   } = useChat();
 
   const [sessionMeta, setSessionMeta] = useState({ policyNumber:'', claimantName:'' });
-  const [toast,       setToast]       = useState({ show: false, msg: '' });
+  const [toast, setToast] = useState({ show: false, msg: '' });
+  const [metrics, setMetrics] = useState({
+    status: 'Ready',
+    latency: '--',
+    cacheHit: '0%',
+    queries: 0
+  });
   const bottomRef = useRef(null);
 
   // Auto-scroll to bottom on new messages
@@ -63,6 +69,11 @@ export default function App() {
   useEffect(() => {
     if (error) showToast('❌ ' + error);
   }, [error]);
+
+  // Update status when streaming
+  useEffect(() => {
+    setMetrics(prev => ({ ...prev, status: isStreaming ? 'Processing...' : 'Ready' }));
+  }, [isStreaming]);
 
   function showToast(msg, ms = 3500) {
     setToast({ show: true, msg });
@@ -82,7 +93,14 @@ export default function App() {
 
   async function handleSend(text) {
     if (!sessionId) return;
+    const startTime = Date.now();
     await send(text);
+    const latency = ((Date.now() - startTime) / 1000).toFixed(1);
+    setMetrics(prev => ({
+      ...prev,
+      queries: prev.queries + 1,
+      latency: `${latency}s`
+    }));
   }
 
   function handleQuickReply(text) {
@@ -91,22 +109,14 @@ export default function App() {
 
   return (
     <div style={S.app}>
-      {/* Sidebar */}
       <Sidebar
         onSessionStart={handleSessionStart}
         onSuggestion={text => !isStreaming && sessionId && send(text)}
         connected={!!sessionId}
       />
 
-      {/* Main chat */}
       <div style={S.chatArea}>
-        <TopBar
-          policyNumber={sessionMeta.policyNumber}
-          claimantName={sessionMeta.claimantName}
-          mode={mode}
-          claimId={claimId}
-          sessionId={sessionId}
-        />
+        <TopBar metrics={metrics} />
 
         <div style={S.messages}>
           {messages.length === 0 && !sessionId
@@ -119,7 +129,6 @@ export default function App() {
                 />
               ))
           }
-          {/* Typing indicator while streaming starts */}
           {isStreaming && messages.at(-1)?.role !== 'assistant' && <TypingIndicator />}
           <div ref={bottomRef} />
         </div>
@@ -130,7 +139,6 @@ export default function App() {
         />
       </div>
 
-      {/* Toast */}
       <div style={S.toast(toast.show)}>{toast.msg}</div>
     </div>
   );

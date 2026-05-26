@@ -1,39 +1,35 @@
 // frontend/src/components/TopBar.jsx
-const S = {
-  bar: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 24px', borderBottom: '1px solid #d8d3ca',
-    background: '#ede9e0', flexShrink: 0,
-  },
-  info: { fontSize: '0.82rem', color: '#7a756c' },
-  strong: { color: '#12100e', fontWeight: 600 },
-  badge: (mode) => ({
-    padding: '4px 13px', borderRadius: 99,
-    fontSize: '0.7rem', fontWeight: 700,
-    letterSpacing: '0.06em', textTransform: 'uppercase',
-    background: mode === 'claim_intake' ? 'rgba(176,125,42,0.12)' : 'rgba(26,107,107,0.1)',
-    color:      mode === 'claim_intake' ? '#b07d2a' : '#1a6b6b',
-  }),
-  claimPill: {
-    background: '#e6f2eb', border: '1px solid rgba(26,88,48,0.2)',
-    color: '#1a5830', borderRadius: 99, padding: '3px 11px',
-    fontSize: '0.72rem', fontFamily: "'JetBrains Mono', monospace",
-  },
-};
-
-export default function TopBar({ policyNumber, claimantName, mode, claimId, sessionId }) {
-  const info = claimantName
-    ? <span><strong style={S.strong}>{claimantName}</strong> · {policyNumber}</span>
-    : <span><strong style={S.strong}>PolicyAI</strong> — Upload a policy to begin</span>;
-
+export default function TopBar({ metrics }) {
   return (
-    <div style={S.bar}>
-      <div style={S.info}>{info}</div>
-      <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-        {claimId && <span style={S.claimPill}>{claimId}</span>}
-        <span style={S.badge(mode)}>
-          {mode === 'claim_intake' ? 'Filing Claim' : 'Chat'}
-        </span>
+    <div className="top-bar">
+      <div className="logo-area">
+        <div className="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div className="logo-text">
+          <h1>PolicyAI</h1>
+          <p>Insurance Document Intelligence</p>
+        </div>
+      </div>
+      <div className="metrics">
+        <div className="metric-card">
+          <div className="metric-label">Status</div>
+          <div className="metric-value">{metrics.status || 'Ready'}</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-label">Latency</div>
+          <div className="metric-value">{metrics.latency || '--'}</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-label">Cache Hit</div>
+          <div className="metric-value">{metrics.cacheHit || '0%'}</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-label">Queries</div>
+          <div className="metric-value">{metrics.queries || '0'}</div>
+        </div>
       </div>
     </div>
   );

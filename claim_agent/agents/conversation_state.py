@@ -26,7 +26,7 @@ class SlotState(TypedDict):
 # Required before submission
 REQUIRED_SLOTS   = ["claim_type","incident_date","incident_description","claimed_amount"]
 
-# Per-slot follow-up questions
+# Base questions (will be extended dynamically based on claim_type)
 SLOT_QUESTIONS = {
     "claim_type":           "What type of claim is this?\n→ **health · vehicle · home · travel · other**",
     "incident_date":        "When did the incident happen? *(e.g. 15 March 2024)*",
@@ -35,6 +35,15 @@ SLOT_QUESTIONS = {
     "hospital_name":        "Which hospital or clinic did you visit?",
     "vehicle_number":       "What is your vehicle registration number?",
     "contact_number":       "What's the best phone number to reach you on?",
+}
+
+# Claim-type specific additional fields
+CLAIM_TYPE_EXTRA_SLOTS = {
+    "vehicle": ["vehicle_number"],
+    "health":  ["hospital_name"],
+    "home":    [],   # could add property_address etc.
+    "travel":  [],
+    "other":   [],
 }
 
 
